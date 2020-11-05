@@ -1,6 +1,6 @@
 {
     "name": "production_automation_web",
-    "short_name": "production_automation_web",
+    "short_name": "paa_web",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
