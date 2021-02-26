@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:production_automation_web/models/factory.dart';
 import 'package:production_automation_web/models/part.dart';
-import 'package:production_automation_web/widgets/bar/stock_bar.dart';
 
 class PartCard extends StatelessWidget {
   final Part part;
@@ -11,7 +10,7 @@ class PartCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: FlatButton(
+      child: TextButton(
         onPressed: handler,
         child: SizedBox(
           height: 50,

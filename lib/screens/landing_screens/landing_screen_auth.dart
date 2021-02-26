@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth.dart';
+
 import '../../models/user.dart';
+
 import '../../screens/landing_screens/landing_screen_factory.dart';
 import '../../screens/sign_in_screen.dart';
 

@@ -26,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     print(widget.user.admin);
-    if (widget.user.admin == "true")
+    if (widget.user.admin)
       _controller = TabController(length: 2, vsync: this);
     else
       _controller = TabController(length: 1, vsync: this);
@@ -43,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen>
         bottom: TabBar(
           controller: _controller,
           tabs: [
-            if (widget.user.admin == "true")
+            if (widget.user.admin)
               Tab(
                 child: Text("Machines"),
               ),
@@ -53,7 +53,7 @@ class _HomeScreenState extends State<HomeScreen>
           ],
         ),
         actions: [
-          FlatButton(
+          TextButton(
             child: Text(
               "Sign out",
               style: TextStyle(color: Colors.white),
@@ -65,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen>
       body: TabBarView(
         controller: _controller,
         children: [
-          if (widget.user.admin == "true")
+          if (widget.user.admin)
             MachineTabBody(factoryModel: widget.factoryModel),
           StockTabBody(user: widget.user, factoryModel: widget.factoryModel),
         ],

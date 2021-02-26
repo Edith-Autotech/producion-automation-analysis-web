@@ -72,7 +72,7 @@ class SelectedPartWidget extends StatelessWidget {
               ),
             ),
           ),
-          FlatButton(
+          TextButton(
             child: Text(
               "Currently Working",
               style: TextStyle(fontSize: 18),

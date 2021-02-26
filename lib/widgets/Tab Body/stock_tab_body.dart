@@ -4,7 +4,6 @@ import 'package:production_automation_web/models/factory.dart';
 import 'package:production_automation_web/models/part.dart';
 import 'package:production_automation_web/models/user.dart';
 import 'package:production_automation_web/providers/database.dart';
-import 'package:production_automation_web/services/api_path.dart';
 import 'package:production_automation_web/widgets/Cards/part_card.dart';
 import 'package:production_automation_web/widgets/bar/stock_bar.dart';
 import 'package:production_automation_web/widgets/listTile/partTile.dart';
@@ -23,7 +22,6 @@ class StockTabBody extends StatefulWidget {
 }
 
 class _StockTabBodyState extends State<StockTabBody> {
-  final FirebaseFirestore _instance = FirebaseFirestore.instance;
   Part _selectedPart;
 
   Widget _rowItem({List<Widget> children}) => Row(
@@ -33,7 +31,7 @@ class _StockTabBodyState extends State<StockTabBody> {
 
   List<QueryDocumentSnapshot> returnParts({QuerySnapshot snapshot}) {
     print(widget.user.comapanyName);
-    if (widget.user.admin == "true")
+    if (widget.user.admin)
       return snapshot.docs;
     else
       return snapshot.docs
@@ -44,7 +42,7 @@ class _StockTabBodyState extends State<StockTabBody> {
 
   @override
   Widget build(BuildContext context) {
-    final database = Provider.of<Database>(context);
+    final database = Provider.of<Database>(context, listen: false);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -54,39 +52,28 @@ class _StockTabBodyState extends State<StockTabBody> {
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Center(
-              child: StreamBuilder<QuerySnapshot>(
-                  stream: _instance
-                      .collection(ApiPath.parts(key: widget.factoryModel.key))
-                      .snapshots(),
+              child: StreamBuilder<List<Part>>(
+                  stream: database.fetchParts(model: widget.factoryModel),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.active) {
                       if (snapshot.hasData) {
-                        QuerySnapshot data = snapshot.data;
+                        List<Part> data = snapshot.data;
                         return Stack(
                           children: [
                             ListView.builder(
-                              itemCount: returnParts(snapshot: data).length,
+                              itemCount: data.length,
                               itemBuilder: (context, index) => PartCard(
-                                factoryModel: widget.factoryModel,
-                                part: database.returnPartFromDocument(
-                                    snapshot:
-                                        returnParts(snapshot: data)[index]),
-                                handler: () => setState(() => _selectedPart =
-                                    database.returnPartFromDocument(
-                                        snapshot: returnParts(
-                                            snapshot: data)[index])),
-                              ),
+                                  factoryModel: widget.factoryModel,
+                                  part: data[index],
+                                  handler: () => setState(
+                                      () => _selectedPart = data[index])),
                             ),
                             Positioned(
                               top: 2.5,
                               child: Container(
                                 color: Colors.black.withOpacity(1.0),
                                 child: SearchWidget<Part>(
-                                  dataList: data.docs
-                                      .map((doc) =>
-                                          database.returnPartFromDocument(
-                                              snapshot: doc))
-                                      .toList(),
+                                  dataList: data,
                                   popupListItemBuilder: (part) =>
                                       PartTile(part: part),
                                   hideSearchBoxWhenItemSelected: false,
@@ -117,11 +104,7 @@ class _StockTabBodyState extends State<StockTabBody> {
                                       () => _selectedPart = selectedPart,
                                     ),
                                   ),
-                                  queryBuilder: (query, list) => data.docs
-                                      .map((doc) =>
-                                          database.returnPartFromDocument(
-                                              snapshot: doc))
-                                      .toList()
+                                  queryBuilder: (query, list) => data
                                       .where((part) => part.partNumber
                                           .toLowerCase()
                                           .contains(query.toLowerCase()))

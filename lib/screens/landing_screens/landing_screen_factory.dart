@@ -1,11 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
-import 'package:production_automation_web/providers/database.dart';
-import 'package:production_automation_web/services/api_path.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
+
 import '../../models/factory.dart';
 import '../../models/user.dart';
+
+import '../../providers/database.dart';
+
 import '../../screens/register_screen.dart';
+
 import '../../widgets/Cards/factory_card.dart';
 import '../../widgets/Cards/register_factory_card.dart';
 
@@ -17,30 +19,26 @@ class FactoryLandingSCreen extends StatefulWidget {
 }
 
 class _FactoryLandingSCreenState extends State<FactoryLandingSCreen> {
-  final FirebaseFirestore _instance = FirebaseFirestore.instance;
-  String adminStatus;
-  String companyName;
+  UserModel _localUser;
 
   void initState() {
     super.initState();
     getAdminStatus();
   }
 
-  void getAdminStatus() async {
+  void getAdminStatus() {
+    final Database database = Provider.of(context, listen: false);
     try {
-      DocumentSnapshot doc =
-          await _instance.doc(ApiPath.userDoc(uid: widget.user.uid)).get();
-      var admin = doc.data()['admin'];
-      var companyNameLocal = doc.data()['companyName'];
-      setState(() {
-        adminStatus = admin;
-        companyName = companyNameLocal;
+      setState(() async {
+        _localUser = await database.fetchUpdatedUser(widget.user);
       });
     } catch (exception) {
       print(exception);
       setState(() {
-        adminStatus = "false";
-        companyName = null;
+        _localUser = widget.user.copyWith(
+          admin: false,
+          comapanyName: null,
+        );
       });
     }
   }
@@ -56,29 +54,19 @@ class _FactoryLandingSCreenState extends State<FactoryLandingSCreen> {
             icon: Icon(Icons.add),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => RegisterScreen(
-                  user: UserModel(
-                    uid: widget.user.uid,
-                    admin: adminStatus,
-                    email: widget.user.email,
-                    imageUrl: widget.user.imageUrl,
-                    name: widget.user.name,
-                    comapanyName: companyName,
-                  ),
-                ),
+                builder: (_) => RegisterScreen(user: _localUser),
               ),
             ),
           )
         ],
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _instance
-            .collection(ApiPath.factories(uid: widget.user.uid))
-            .snapshots(),
+      body: StreamBuilder<List<FactoryModel>>(
+        stream: database.fetchFactories(uid: widget.user.uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.active) {
             if (snapshot.hasData) {
-              return snapshot.data.docs.length != 0
+              List<FactoryModel> data = snapshot.data;
+              return data.length != 0
                   ? Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: GridView.builder(
@@ -86,34 +74,19 @@ class _FactoryLandingSCreenState extends State<FactoryLandingSCreen> {
                           crossAxisCount: 3,
                           childAspectRatio: 83 / 70,
                         ),
-                        itemCount: snapshot.data.docs.length,
+                        itemCount: data.length,
                         itemBuilder: (context, index) => Padding(
                           padding: const EdgeInsets.all(8),
                           child: FactoryCard(
-                            user: UserModel(
-                              uid: widget.user.uid,
-                              admin: adminStatus,
-                              email: widget.user.email,
-                              imageUrl: widget.user.imageUrl,
-                              name: widget.user.name,
-                              comapanyName: companyName,
-                            ),
-                            factory: database.returnFactoryFromDocument(
-                                snapshot: snapshot.data.docs[index]),
+                            user: _localUser,
+                            factory: data[index],
                           ),
                         ),
                       ),
                     )
                   : Center(
                       child: RegisterFactoryCard(
-                        user: UserModel(
-                          uid: widget.user.uid,
-                          admin: adminStatus,
-                          email: widget.user.email,
-                          imageUrl: widget.user.imageUrl,
-                          name: widget.user.name,
-                          comapanyName: companyName,
-                        ),
+                        user: _localUser,
                       ),
                     );
             }

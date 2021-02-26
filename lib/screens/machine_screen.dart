@@ -1,12 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
-import 'package:production_automation_web/models/count_model.dart';
-import 'package:production_automation_web/providers/database.dart';
-import 'package:production_automation_web/services/api_path.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
+
+import '../providers/database.dart';
+
+import '../models/count_model.dart';
 import '../models/factory.dart';
 import '../models/machine.dart';
-import '../models/strokes_model.dart';
+
 import '../widgets/charts/strokes_chart.dart';
 
 class MachineScreen extends StatefulWidget {
@@ -19,56 +19,7 @@ class MachineScreen extends StatefulWidget {
 }
 
 class _MachineScreenState extends State<MachineScreen> {
-  final FirebaseFirestore _instance = FirebaseFirestore.instance;
-  final StrokesModel model = StrokesModel();
-  final CountModel countModel = CountModel();
-  CountModel _selectedModel;
-  List<StrokesModel> data = [];
-  bool _isLoading = false;
   DateTime selectedDate = DateTime.now();
-
-  Future<void> _fetchData() async {
-    final database = Provider.of<Database>(context, listen: false);
-    final String dateString = selectedDate.toString().split(" ")[0];
-    setState(() {
-      _isLoading = true;
-    });
-    _instance
-        .doc(ApiPath.count(
-          date: dateString,
-          key: widget.factoryModel.key,
-          machineID: widget.machine.machineId,
-        ))
-        .snapshots()
-        .forEach((element) {
-      try {
-        CountModel count =
-            database.returnCountfromDocument(dateString, snapshot: element);
-        setState(() {
-          _selectedModel = count;
-          _isLoading = false;
-        });
-      } catch (error) {
-        setState(() {
-          _isLoading = false;
-          _selectedModel = CountModel(
-            count: 0,
-            date: dateString,
-            idleTime: "No Data",
-            productionTime: "No Data",
-            standbyTime: "No Data",
-          );
-        });
-      }
-    });
-  }
-
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchData();
-  }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime picked = await showDatePicker(
@@ -80,8 +31,6 @@ class _MachineScreenState extends State<MachineScreen> {
       setState(() {
         selectedDate = picked;
       });
-    print("new date is " + selectedDate.toString());
-    _fetchData();
   }
 
   Row _rowItem({String label, String value}) => Row(
@@ -93,88 +42,114 @@ class _MachineScreenState extends State<MachineScreen> {
       );
   @override
   Widget build(BuildContext context) {
+    final Database database = Provider.of<Database>(context, listen: false);
+    final String dateString = selectedDate.toString().split(" ")[0];
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.machine.machineId),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: _selectedModel != null
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+        appBar: AppBar(
+          title: Text(widget.machine.machineId),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: StreamBuilder<CountModel>(
+            stream: database.streamCountModel(
+              dateString: dateString,
+              factoryModel: widget.factoryModel,
+              machine: widget.machine,
+            ),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.active) {
+                if (snapshot.hasData) {
+                  CountModel _count = snapshot.data;
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(
-                        width: 0.3 * MediaQuery.of(context).size.width,
-                      ),
-                      Text(
-                        "Hourly Analysis",
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Expanded(child: Container()),
-                      RaisedButton(
-                        onPressed: () => _selectDate(context),
-                        child: Text("Select date"),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  Row(
-                    children: [
-                      SizedBox(
-                        height: 0.6 * MediaQuery.of(context).size.height,
-                        width: 0.8 * MediaQuery.of(context).size.width,
-                        child: Center(
-                          child: !_isLoading
-                              ? StrokesChart(
-                                  machine: widget.machine,
-                                  factoryModel: widget.factoryModel,
-                                  countModel: _selectedModel,
-                                )
-                              : CircularProgressIndicator(),
-                        ),
-                      ),
-                      SizedBox(
-                        height: 0.6 * MediaQuery.of(context).size.height,
-                        width: 0.15 * MediaQuery.of(context).size.width,
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                _rowItem(
-                                    label: "Date", value: _selectedModel.date),
-                                _rowItem(
-                                    label: "Count",
-                                    value: _selectedModel.count.toString()),
-                                _rowItem(
-                                    label: "Idle Time",
-                                    value: _selectedModel.idleTime),
-                                _rowItem(
-                                    label: "Standby Time",
-                                    value: _selectedModel.standbyTime),
-                                _rowItem(
-                                    label: "Production Time",
-                                    value: _selectedModel.productionTime),
-                              ],
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 0.3 * MediaQuery.of(context).size.width,
+                          ),
+                          Text(
+                            "Hourly Analysis",
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ),
-                      )
+                          Expanded(child: Container()),
+                          ElevatedButton(
+                            onPressed: () => _selectDate(context),
+                            child: Text("Select date"),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 20),
+                      Row(
+                        children: [
+                          SizedBox(
+                            height: 0.6 * MediaQuery.of(context).size.height,
+                            width: 0.8 * MediaQuery.of(context).size.width,
+                            child: Center(
+                                child: StrokesChart(
+                              machine: widget.machine,
+                              factoryModel: widget.factoryModel,
+                              countModel: _count,
+                            )),
+                          ),
+                          SizedBox(
+                            height: 0.6 * MediaQuery.of(context).size.height,
+                            width: 0.15 * MediaQuery.of(context).size.width,
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    _rowItem(label: "Date", value: _count.date),
+                                    _rowItem(
+                                        label: "Count",
+                                        value: _count.count.toString()),
+                                    _rowItem(
+                                      label: "Idle Time",
+                                      value: _count.idleTime,
+                                    ),
+                                    _rowItem(
+                                      label: "Standby Time",
+                                      value: _count.standbyTime,
+                                    ),
+                                    _rowItem(
+                                      label: "Production Time",
+                                      value: _count.productionTime,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
                     ],
-                  ),
-                ],
-              )
-            : Center(
-                child: CircularProgressIndicator(),
-              ),
-      ),
-    );
+                  );
+                } else
+                  return Center(
+                    child: Text("there is no data for the selected date"),
+                  );
+              } else if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              } else
+                return Center(
+                  child: Text("Check internet connection"),
+                );
+            },
+          ),
+        )
+
+        //
+
+        );
+    // );
   }
 }

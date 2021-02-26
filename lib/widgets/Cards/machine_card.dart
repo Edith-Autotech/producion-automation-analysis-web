@@ -37,20 +37,20 @@ class MachineCard extends StatelessWidget {
                   ),
                 ),
                 Expanded(child: Container()),
-                Text(
-                  "Current Part --> ${machine.currentPart}",
-                  softWrap: true,
-                  style: TextStyle(
-                    fontSize: 16,
-                  ),
-                ),
-                Text(
-                  "Current operation --> ${machine.currentOperation}",
-                  softWrap: true,
-                  style: TextStyle(
-                    fontSize: 16,
-                  ),
-                ),
+                // Text(
+                //   "Current Part --> ${machine.currentPart}",
+                //   softWrap: true,
+                //   style: TextStyle(
+                //     fontSize: 16,
+                //   ),
+                // ),
+                // Text(
+                //   "Current operation --> ${machine.currentOperation}",
+                //   softWrap: true,
+                //   style: TextStyle(
+                //     fontSize: 16,
+                //   ),
+                // ),
               ],
             ),
           ),

@@ -11,7 +11,8 @@ class StrokesModel {
     this.strokes,
   });
 
-  StrokesModel fromDocumentSnapshot({DocumentSnapshot snapshot}) {
-    return StrokesModel(barColor: null, xAxis: snapshot.id, strokes: snapshot.data()['count']);
+  factory StrokesModel.fromDocument({DocumentSnapshot snapshot}) {
+    return StrokesModel(
+        barColor: null, xAxis: snapshot.id, strokes: snapshot.data()['count']);
   }
 }
