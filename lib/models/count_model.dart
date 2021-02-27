@@ -14,9 +14,9 @@ class CountModel {
     this.idleTime,
     this.productionTime,
     this.standbyTime,
-  });
-  factory CountModel.fromDocument(String date,
-      {DocumentSnapshot snapshot}) {
+  })  : assert(date != null),
+        assert(count != null);
+  factory CountModel.fromDocument(String date, {DocumentSnapshot snapshot}) {
     var data = snapshot.data();
     return CountModel(
       date: date,

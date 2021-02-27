@@ -8,10 +8,12 @@ class FactoryModel {
   FactoryModel({
     this.key,
     this.name,
-  });
+  })  : assert(key != null),
+        assert(name != null);
 
   factory FactoryModel.fromDocument(DocumentSnapshot snapshot) {
     var data = snapshot.data();
+    print("DATA is " + data.toString());
     return FactoryModel(
       key: data["key"],
       name: data["name"],

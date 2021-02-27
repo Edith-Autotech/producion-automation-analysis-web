@@ -26,11 +26,12 @@ class _FactoryLandingSCreenState extends State<FactoryLandingSCreen> {
     getAdminStatus();
   }
 
-  void getAdminStatus() {
+  void getAdminStatus() async {
     final Database database = Provider.of(context, listen: false);
     try {
-      setState(() async {
-        _localUser = await database.fetchUpdatedUser(widget.user);
+      var result = await database.fetchUpdatedUser(widget.user);
+      setState(() {
+        _localUser = result;
       });
     } catch (exception) {
       print(exception);
@@ -61,7 +62,7 @@ class _FactoryLandingSCreenState extends State<FactoryLandingSCreen> {
         ],
       ),
       body: StreamBuilder<List<FactoryModel>>(
-        stream: database.fetchFactories(uid: widget.user.uid),
+        stream: database.fetchFactories(uid: _localUser.uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.active) {
             if (snapshot.hasData) {
@@ -89,15 +90,18 @@ class _FactoryLandingSCreenState extends State<FactoryLandingSCreen> {
                         user: _localUser,
                       ),
                     );
-            }
-          } else if (snapshot.connectionState == ConnectionState.waiting ||
-              snapshot.connectionState == ConnectionState.none ||
-              snapshot.connectionState == ConnectionState.done) {
+            } else
+              return Center(
+                child: Text("Snapshot has no data"),
+              );
+          } else if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
               child: CircularProgressIndicator(),
             );
           }
-          return null;
+          return Center(
+            child: Text("Check inteernet connection"),
+          );
         },
       ),
     );
